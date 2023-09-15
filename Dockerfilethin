@@ -1,0 +1,38 @@
+# --- Build Stage ---
+FROM alpine:3.11 as build-stage
+
+# Set the working directory to /app
+WORKDIR /app
+
+COPY . .
+
+# Install system dependencies
+RUN apk add --no-cache python2 py2-pip nodejs npm
+
+WORKDIR /app/flask-app
+
+
+# Install any needed packages specified in requirements.txt
+RUN npm install && \
+    npm run build && \
+    pip install --no-cache-dir -r requirements.txt
+
+# --- Production Stage ---
+FROM alpine:3.11
+
+RUN apk add --no-cache python2 py2-pip nodejs npm
+
+# Set the working directory to /app
+WORKDIR /app
+
+# Copy the built files and installed packages from the build stage
+COPY --from=build-stage /app/flask-app/app.py .
+COPY --from=build-stage /app/flask-app/requirements.txt .
+
+RUN pip install -r requirements.txt
+
+# Expose port 5000 (optional, documentation purposes)
+EXPOSE 5000
+
+# Run the application when the container launches
+CMD ["python", "app.py"]

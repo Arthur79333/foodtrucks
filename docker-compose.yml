@@ -1,0 +1,29 @@
+version: '3'
+services:
+  flask-app:
+    build:
+      context: .
+      dockerfile: Dockerfilethin
+    depends_on:
+      - es
+  es:
+    image: docker.elastic.co/elasticsearch/elasticsearch:6.3.2
+    ports:
+      - 9200:9200
+    environment:
+      - discovery.type=single-node
+    volumes:
+      - es-data:/usr/share/elasticsearch/data
+  nginx:
+    image: nginx:alpine
+    ports:
+      - 80:80
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/
+     # - ./flask-app/static:/usr/share/nginx/html/static
+     # - ./flask-app/templates/index.html:/usr/share/nginx/html/
+    depends_on:
+      - flask-app
+
+volumes:
+  es-data:
